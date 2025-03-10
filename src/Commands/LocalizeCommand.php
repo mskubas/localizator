@@ -53,11 +53,14 @@ class LocalizeCommand extends Command
             $progressBar->setMessage("Localizing {$locale}...");
 
             foreach ($this->getTypes() as $type) {
-                $localizator->localize(
-                    $parser->getKeys($locale, $type),
-                    $type,
-                    $locale,
-                    $this->option('remove-missing')
+                $keys = $parser->getKeys($locale, $type);
+                $localizator
+                    ->registerKeys($keys, $type)
+                    ->localize(
+                        $keys,
+                        $type,
+                        $locale,
+                        $this->option('remove-missing')
                 );
             }
 

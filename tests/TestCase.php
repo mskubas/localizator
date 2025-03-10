@@ -21,6 +21,7 @@ class TestCase extends Orchestra
     public function setUp(): void
     {
         parent::setUp();
+        self::flushDirectories('lang', 'views', '../storage/localizator');
     }
 
     /**

@@ -26,7 +26,7 @@ class LocalizatorTest extends TestCase
         self::assertSame(['Localizator' => 'Localizator'], $enJsonContents);
 
         // Cleanup.
-        self::flushDirectories('lang', 'views');
+        self::flushDirectories('lang', 'views', '../storage/localizator');
     }
 
     /**
@@ -55,7 +55,7 @@ class LocalizatorTest extends TestCase
         self::assertSame(['Localizator' => ''], $deJsonContents);
 
         // Cleanup.
-        self::flushDirectories('lang', 'views');
+        self::flushDirectories('lang', 'views', '../storage/localizator');
     }
 
     /**
@@ -91,7 +91,7 @@ class LocalizatorTest extends TestCase
         ], $enJsonContents);
 
         // Cleanup.
-        self::flushDirectories('lang', 'views');
+        self::flushDirectories('lang', 'views', '../storage/localizator');
     }
 
     /**
@@ -135,7 +135,7 @@ class LocalizatorTest extends TestCase
         ], $enJsonContents);
 
         // Cleanup.
-        self::flushDirectories('lang', 'views');
+        self::flushDirectories('lang', 'views', '../storage/localizator');
     }
 
     /**
@@ -163,12 +163,12 @@ class LocalizatorTest extends TestCase
         ], $enJsonContents);
 
         // Cleanup.
-        self::flushDirectories('lang', 'views');
+        self::flushDirectories('lang', 'views', '../storage/localizator');
     }
 
     public function testLocalizeCommandWithMultilineMessages(): void
     {
-        $this->createTestView("__(\n'stand with ukraine'\n)");
+        $this->createTestView("__(\n'stand with truth'\n)");
 
         // Run localize command.
         $this->artisan('localize')
@@ -182,16 +182,16 @@ class LocalizatorTest extends TestCase
 
         // Did it sort the translation keys like we expected?
         self::assertSame([
-            'stand with ukraine' => 'stand with ukraine',
+            'stand with truth' => 'stand with truth',
         ], $enJsonContents);
 
         // Cleanup.
-        self::flushDirectories('lang', 'views');
+        self::flushDirectories('lang', 'views', '../storage/localizator');
     }
 
     public function testLocalizeCommandWithMultilineMessagesAndSpaces(): void
     {
-        $this->createTestView("{{ __(\n   'stand with ukraine'   \n) }}");
+        $this->createTestView("{{ __(\n   'stand with truth'   \n) }}");
 
         // Run localize command.
         $this->artisan('localize')
@@ -205,11 +205,11 @@ class LocalizatorTest extends TestCase
 
         // Did it sort the translation keys like we expected?
         self::assertSame([
-            'stand with ukraine' => 'stand with ukraine',
+            'stand with truth' => 'stand with truth',
         ], $enJsonContents);
 
         // Cleanup.
-        self::flushDirectories('lang', 'views');
+        self::flushDirectories('lang', 'views', '../storage/localizator');
     }
 
     public function testIntTranslationKeysAreBeingSavedAsStrings(): void
@@ -298,23 +298,36 @@ PHP;
 
     public function testRemoveMissingKeys(): void
     {
-        self::flushDirectories('lang', 'views');
+        self::flushDirectories('lang', 'views', '../storage/localizator');
 
         $this->createTestDefaultLangFile([
             'missingstring' => 'Missing',
+            'Added by Lang' => 'Added by Lang',
             'name' => 'Name',
         ], 'app', 'en');
+        $this->createTestDefaultLangFile([
+            'test' => 'testValue',
+        ], 'auth', 'en');
+        $this->createTestRegisterDefaultLangFile([
+            'app.missingstring' => 'Missing',
+            'app.name' => 'Name',
+        ]);
         $this->createTestJsonLangFile([
+            'Added by Lang' => 'Added by Lang',
+            'Login' => 'Login',
+            'Missing' => 'Missing',
+        ], 'en');
+        $this->createTestRegisterJsonLangFile([
             'Login' => 'Login',
             'Missing' => 'Missing',
         ], 'en');
 
         $enDefaultContents = $this->getDefaultLangContents('en', 'app');
         $enJsonContents = $this->getJsonLangContents('en');
-        self::assertSame(['missingstring' => 'Missing', 'name' => 'Name'], $enDefaultContents);
-        self::assertSame(['Login' => 'Login', 'Missing' => 'Missing'], $enJsonContents);
+        self::assertSame(['missingstring' => 'Missing', 'Added by Lang' => 'Added by Lang', 'name' => 'Name'], $enDefaultContents);
+        self::assertSame(['Added by Lang' => 'Added by Lang', 'Login' => 'Login', 'Missing' => 'Missing'], $enJsonContents);
 
-        $this->createTestView("{{ __('Login') }} {{ __('app.name') }}");
+        $this->createTestView("{{ __('Login') }} {{ __('A new string') }} {{ __('app.name') }} {{ __('auth.test') }}");
 
         // Run the command with the option to remove keys/strings that are not present anymore
         $this->artisan('localize en --remove-missing')
@@ -327,11 +340,12 @@ PHP;
         // Do their contents match the expected results?
         $enDefaultContents = $this->getDefaultLangContents('en', 'app');
         $enJsonContents = $this->getJsonLangContents('en');
-        self::assertSame(['name' => 'Name'], $enDefaultContents);
-        self::assertSame(['Login' => 'Login'], $enJsonContents);
+        print_r($enJsonContents);
+        self::assertSame(['Added by Lang' => 'Added by Lang', 'name' => 'Name'], $enDefaultContents);
+        self::assertSame(['Added by Lang' => 'Added by Lang', 'A new string' => 'A new string', 'Login' => 'Login'], $enJsonContents);
 
         // Cleanup.
-        self::flushDirectories('lang', 'views');
+        self::flushDirectories('lang', 'views', '../storage/localizator');
     }
 
     public function testDirectoriesAreBeingExcluded(): void
@@ -360,6 +374,6 @@ PHP;
         ], $contents);
 
         // Cleanup.
-        self::flushDirectories('lang', 'views');
+        self::flushDirectories('lang', 'views', '../storage/localizator');
     }
 }

@@ -12,3 +12,14 @@ if (! function_exists('lang_path')) {
             : resource_path('lang'.($path !== '' ? DIRECTORY_SEPARATOR.$path : ''));
     }
 }
+
+if (! function_exists('register_path')) {
+    /**
+     * @param string $path
+     * @return string
+     */
+    function register_path($path = '')
+    {
+        return app()->storagePath('localizator/' . $path);
+    }
+}

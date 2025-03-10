@@ -3,6 +3,7 @@
 namespace Amirami\Localizator\Tests\Concerns;
 
 use Amirami\Localizator\Services\Writers\DefaultWriter;
+use Illuminate\Filesystem\Filesystem;
 use RuntimeException;
 
 trait CreatesTestFiles
@@ -61,6 +62,20 @@ trait CreatesTestFiles
 
     /**
      * @param array $contents
+     * @return void
+     */
+    protected function createTestRegisterJsonLangFile(array $contents): void
+    {
+        $writer = new DefaultWriter();
+        $contents = $writer->exportArray($contents);
+        (new Filesystem)->put(
+            register_path('json.php'),
+            $contents
+        );
+    }
+
+    /**
+     * @param array $contents
      * @param string $fileName
      * @param string $locale
      * @return void
@@ -78,6 +93,16 @@ trait CreatesTestFiles
         $this->createTestLangFile(
             $export,
             $locale.DIRECTORY_SEPARATOR."{$fileName}.php"
+        );
+    }
+
+    protected function createTestRegisterDefaultLangFile(array $contents)
+    {
+        $writer = new DefaultWriter();
+        $contents = $writer->exportArray($contents);
+        (new Filesystem)->put(
+            register_path('default.php'),
+            $contents
         );
     }
 }
