@@ -54,7 +54,11 @@ class Localizator
                 ->when($removeMissing, function (Translatable $keyCollection) use ($keys, $type) {
                     $file = $type === 'default' ? 'default.php' : 'json.php';
                     $register = require register_path($file);
-                    $dotKeyCollection = Arr::dot($keyCollection);
+                    if ($type === 'default') {
+                        $dotKeyCollection = Arr::dot($keyCollection);
+                    } else {
+                        $dotKeyCollection = $keyCollection;
+                    }
                     $dotKeyCollection = collect($dotKeyCollection)->filter(function ($item, $key) use ($keys, $register, $type) {
                         if (!$keys->has($key) && collect($register)->has($key)) {
                             return false;
@@ -62,7 +66,10 @@ class Localizator
                         return true;
                         
                     });
-                    return Arr::undot($dotKeyCollection);
+                    if ($type === 'default') {
+                        $dotKeyCollection = Arr::undot($dotKeyCollection); 
+                    }
+                    return $dotKeyCollection;
                 }))->when(config('localizator.sort'), function (Translatable $keyCollection) {
                     return $keyCollection->sortAlphabetically();
                 });
