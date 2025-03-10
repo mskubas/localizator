@@ -20,13 +20,8 @@ class Localizator
         if (file_exists(register_path($file))) {
             $register = require register_path($file);
         }
-        $keys = $keys->merge($register);
-        $writer = new DefaultWriter();
-        $contents = $writer->exportArray($keys->toArray());
-        (new Filesystem)->put(
-            register_path($file),
-            $contents
-        );
+        $keys = $keys->merge($register)->toArray();
+        $this->saveRegisterFile($keys, $file);
         return $this;
     }
 
@@ -39,6 +34,16 @@ class Localizator
     public function localize(Translatable $keys, string $type, string $locale, bool $removeMissing): void
     {
         $this->getWriter($type)->put($locale, $this->collect($keys, $type, $locale, $removeMissing));
+    }
+
+    protected function saveRegisterFile(array $keys, string $file)
+    {
+        $writer = new DefaultWriter();
+        $contents = $writer->exportArray($keys);
+        (new Filesystem)->put(
+            register_path($file),
+            $contents
+        );
     }
 
     /**
@@ -59,16 +64,23 @@ class Localizator
                     } else {
                         $dotKeyCollection = $keyCollection;
                     }
-                    $dotKeyCollection = collect($dotKeyCollection)->filter(function ($item, $key) use ($keys, $register, $type) {
+
+                    $missing = [];
+                    $dotKeyCollection = collect($dotKeyCollection)->filter(function ($item, $key) use ($keys, $register, &$missing) {
                         if (!$keys->has($key) && collect($register)->has($key)) {
+                            $missing[$key] = $item;
                             return false;
                         }
-                        return true;
-                        
+                        return true;     
                     });
+
                     if ($type === 'default') {
                         $dotKeyCollection = Arr::undot($dotKeyCollection); 
                     }
+
+                    $register = Arr::except($register, array_keys($missing));
+                    $this->saveRegisterFile($register, $file);
+
                     return $dotKeyCollection;
                 }))->when(config('localizator.sort'), function (Translatable $keyCollection) {
                     return $keyCollection->sortAlphabetically();

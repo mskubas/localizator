@@ -340,7 +340,6 @@ PHP;
         // Do their contents match the expected results?
         $enDefaultContents = $this->getDefaultLangContents('en', 'app');
         $enJsonContents = $this->getJsonLangContents('en');
-        print_r($enJsonContents);
         self::assertSame(['Added by Lang' => 'Added by Lang', 'name' => 'Name'], $enDefaultContents);
         self::assertSame(['Added by Lang' => 'Added by Lang', 'A new string' => 'A new string', 'Login' => 'Login'], $enJsonContents);
 
