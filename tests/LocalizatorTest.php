@@ -340,10 +340,50 @@ PHP;
         // Do their contents match the expected results?
         $enDefaultContents = $this->getDefaultLangContents('en', 'app');
         $enJsonContents = $this->getJsonLangContents('en');
+        $registerJsonContent = $this->getRegisterJsonLangContents();
         self::assertSame(['Added by Lang' => 'Added by Lang', 'name' => 'Name'], $enDefaultContents);
         self::assertSame(['Added by Lang' => 'Added by Lang', 'A new string' => 'A new string', 'Login' => 'Login'], $enJsonContents);
+        self::assertSame(['Login' => 'Login', 'A new string' => 'A new string'], $registerJsonContent);
 
         // Cleanup.
+        self::flushDirectories('views');
+
+        $this->createTestView("{{ __('Login') }} {{ __('A new string') }} { __('Another new string') }}  {{ __('app.name') }} {{ __('auth.test') }}");
+
+        $this->artisan('localize en --remove-missing')
+            ->assertExitCode(0);
+
+        $enJsonContents = $this->getJsonLangContents('en');
+        $registerJsonContent = $this->getRegisterJsonLangContents();
+        self::assertSame(['Added by Lang' => 'Added by Lang', 'A new string' => 'A new string', 'Another new string' => 'Another new string', 'Login' => 'Login'], $enJsonContents);
+        self::assertSame(['Login' => 'Login', 'A new string' => 'A new string', 'Another new string' => 'Another new string'], $registerJsonContent);
+
+        // Cleanup.
+        self::flushDirectories('views');
+
+        $this->createTestView("{{ __('Login') }} {{ __('A new string') }} {{ __('app.name') }} {{ __('auth.test') }}");
+
+        $this->artisan('localize en --remove-missing')
+            ->assertExitCode(0);
+
+        $enJsonContents = $this->getJsonLangContents('en');
+        $registerJsonContent = $this->getRegisterJsonLangContents();
+        self::assertSame(['Added by Lang' => 'Added by Lang', 'A new string' => 'A new string', 'Login' => 'Login'], $enJsonContents);
+        self::assertSame(['Login' => 'Login', 'A new string' => 'A new string'], $registerJsonContent);
+
+        // Cleanup.
+        self::flushDirectories('views');
+
+        $this->createTestView("{{ __('Login') }} {{ __('app.name') }} {{ __('auth.test') }}");
+
+        $this->artisan('localize en --remove-missing')
+            ->assertExitCode(0);
+
+        $enJsonContents = $this->getJsonLangContents('en');
+        $registerJsonContent = $this->getRegisterJsonLangContents();
+        self::assertSame(['Added by Lang' => 'Added by Lang', 'Login' => 'Login'], $enJsonContents);
+        self::assertSame(['Login' => 'Login'], $registerJsonContent);
+
         self::flushDirectories('lang', 'views', '../storage/localizator');
     }
 

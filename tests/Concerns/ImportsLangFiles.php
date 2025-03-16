@@ -35,4 +35,13 @@ trait ImportsLangFiles
             true
         );
     }
+
+    /**
+     * @param string $locale
+     * @return array
+     */
+    protected function getRegisterJsonLangContents(): array
+    {
+        return require register_path('json.php');
+    }
 }

@@ -8,10 +8,11 @@ use Amirami\Localizator\Contracts\Writable;
 use Amirami\Localizator\Services\Writers\DefaultWriter;
 use Illuminate\Filesystem\Filesystem;
 use Illuminate\Support\Arr;
-use Illuminate\Support\Facades\Storage;
 
 class Localizator
 {
+    private $register = [];
+    private $missing = [];
 
     public function registerKeys(Translatable $keys, string $type)
     {
@@ -20,20 +21,29 @@ class Localizator
         if (file_exists(register_path($file))) {
             $register = require register_path($file);
         }
+        $this->register = $register;
+        return $this;
+    }
+
+    public function saveRegister(Translatable $keys, string $type)
+    {
+        $register = Arr::except($this->register, array_keys($this->missing));
+        $file = $type === 'default' ? 'default.php' : 'json.php';
         $keys = $keys->merge($register)->toArray();
         $this->saveRegisterFile($keys, $file);
-        return $this;
     }
 
     /**
      * @param Translatable $keys
      * @param string $type
      * @param string $locale
-     * @return void
+     * @return self
      */
-    public function localize(Translatable $keys, string $type, string $locale, bool $removeMissing): void
+    public function localize(Translatable $keys, string $type, string $locale, bool $removeMissing)
     {
         $this->getWriter($type)->put($locale, $this->collect($keys, $type, $locale, $removeMissing));
+
+        return $this;
     }
 
     protected function saveRegisterFile(array $keys, string $file)
@@ -58,17 +68,15 @@ class Localizator
             ->merge($this->getCollector($type)->getTranslated($locale)
                 ->when($removeMissing, function (Translatable $keyCollection) use ($keys, $type) {
                     $file = $type === 'default' ? 'default.php' : 'json.php';
-                    $register = require register_path($file);
                     if ($type === 'default') {
                         $dotKeyCollection = Arr::dot($keyCollection);
                     } else {
                         $dotKeyCollection = $keyCollection;
                     }
 
-                    $missing = [];
-                    $dotKeyCollection = collect($dotKeyCollection)->filter(function ($item, $key) use ($keys, $register, &$missing) {
-                        if (!$keys->has($key) && collect($register)->has($key)) {
-                            $missing[$key] = $item;
+                    $dotKeyCollection = collect($dotKeyCollection)->filter(function ($item, $key) use ($keys, &$missing) {
+                        if (!$keys->has($key) && collect($this->register)->has($key)) {
+                            $this->missing[$key] = $item;
                             return false;
                         }
                         return true;     
@@ -77,9 +85,6 @@ class Localizator
                     if ($type === 'default') {
                         $dotKeyCollection = Arr::undot($dotKeyCollection); 
                     }
-
-                    $register = Arr::except($register, array_keys($missing));
-                    $this->saveRegisterFile($register, $file);
 
                     return $dotKeyCollection;
                 }))->when(config('localizator.sort'), function (Translatable $keyCollection) {

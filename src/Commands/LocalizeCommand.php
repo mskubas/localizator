@@ -61,7 +61,7 @@ class LocalizeCommand extends Command
                         $type,
                         $locale,
                         $this->option('remove-missing')
-                );
+                    )->saveRegister($keys, $type);
             }
 
             $progressBar->advance();
